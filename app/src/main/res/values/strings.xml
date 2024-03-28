@@ -1,3 +1,19 @@
 <resources>
     <string name="app_name">PieChart</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="green">Green</string>
+    <string name="red">Red</string>
+    <string name="blue">Blue</string>
+    <string name="value_of_colors_n_in_percentage">Value of Colors\n(In Percentage):</string>
+    <string name="greenn">Green</string>
+    <string name="redd">Red</string>
+    <string name="bluee">Blue</string>
+    <string name="blueee">Blue</string>
+    <string name="back">Back</string>
+    <string name="get_data">Get Data</string>
+    <string name="post_data">Post Data</string>
+    <string name="_0">0</string>
+    <string name="_0_">0</string>
+    <string name="response">= RESPONSE =</string>
 </resources>

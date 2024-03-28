@@ -1,140 +1,98 @@
 package com.kutaydem.piechart;
 
-import static android.content.ContentValues.TAG;
-
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.fragment.app.Fragment;
 
-import android.graphics.Color;
+import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
+import android.widget.FrameLayout;
 
-import org.eazegraph.lib.charts.PieChart;
-import org.eazegraph.lib.models.PieModel;
-
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Random;
-
-import okhttp3.Call;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+import com.kutaydem.piechart.Fragments.RandomlyFragment;
+import com.kutaydem.piechart.Fragments.ManuallyFragment;
 
 public class MainActivity extends AppCompatActivity {
-    TextView colorG, colorR, colorB, responseTextView;
-    PieChart pieChart;
-    Button sendButton;
+    Button btnRandom, btnManual;
+    private FragmentManager fragmentManager;
+
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // Recreate the current fragment to apply the new layout
+        if (getSupportFragmentManager().getFragments() != null) {
+            for (Fragment fragment : getSupportFragmentManager().getFragments()) {
+                if (fragment instanceof ManuallyFragment) {
+                    ManuallyFragment manuallyFragment = (ManuallyFragment) fragment;
+                    getSupportFragmentManager().beginTransaction().detach(manuallyFragment).commitNowAllowingStateLoss();
+                    getSupportFragmentManager().beginTransaction().attach(manuallyFragment).commitNowAllowingStateLoss();
+                    break;
+                }
+                if (fragment instanceof RandomlyFragment) {
+                    RandomlyFragment randomlyFragment = (RandomlyFragment) fragment;
+                    getSupportFragmentManager().beginTransaction().detach(randomlyFragment).commitNowAllowingStateLoss();
+                    getSupportFragmentManager().beginTransaction().attach(randomlyFragment).commitNowAllowingStateLoss();
+                    break;
+                }
+            }
+        }
+    }
+
+    protected void onCreate(Bundle savedIntancesStates) {
+        super.onCreate(savedIntancesStates);
         setContentView(R.layout.activity_main);
+        init();
 
-        colorG = findViewById(R.id.colorG);
-        colorR = findViewById(R.id.colorR);
-        colorB = findViewById(R.id.colorB);
-        pieChart = findViewById(R.id.piechart);
-        sendButton = findViewById(R.id.sendButton);
-        responseTextView = findViewById(R.id.responseTextView);
+    }
 
-        sendButton.setOnClickListener(new View.OnClickListener() {
+
+    public void init() {
+        fragmentManager = getSupportFragmentManager();
+
+        btnRandom = findViewById(R.id.btnRandomly);
+        btnManual = findViewById(R.id.btnManually);
+
+        btnRandom.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setData();
-                sendPostRequestAsync();
+
+                /*Intent intent= new Intent();
+                finish();
+                startActivity(intent);*/
+                System.out.println("btnRandom Pressedx1");
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentTransaction.add(R.id.constraintMain, new RandomlyFragment());
+                fragmentTransaction.commit();
+                btnHide();
+                System.out.println("btnRandom Pressed");
             }
         });
 
-        setData();
-    }
-
-    private void setData() {
-        Random random = new Random();
-        int num1 = random.nextInt(100);
-        int num2 = random.nextInt(100 - num1);
-        int num3 = 100 - (num1 + num2);
-
-        colorG.setText(Integer.toString(num1));
-        colorR.setText(Integer.toString(num2));
-        colorB.setText(Integer.toString(num3));
-
-        pieChart.clearChart();
-
-        pieChart.addPieSlice(
-                new PieModel(
-                        "Green",
-                        Integer.parseInt(colorG.getText().toString()),
-                        Color.parseColor("#66BB6A")));
-        pieChart.addPieSlice(
-                new PieModel(
-                        "Red",
-                        Integer.parseInt(colorR.getText().toString()),
-                        Color.parseColor("#EF5350")));
-        pieChart.addPieSlice(
-                new PieModel(
-                        "Blue",
-                        Integer.parseInt(colorB.getText().toString()),
-                        Color.parseColor("#29B6F6")));
-
-        pieChart.startAnimation();
-    }
-
-    private void sendPostRequestAsync() {
-        new Thread(new Runnable() {
+        btnManual.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void run() {
-                try {
-                    sendPostRequest();
-                } catch (IOException e) {
-                    Log.e(TAG, "Error sending POST request", e);
-                }
-            }
-        }).start();
-    }
-
-    private void sendPostRequest() throws IOException {
-        OkHttpClient client = new OkHttpClient();
-
-        MediaType mediaType = MediaType.parse("application/json");
-        RequestBody body = RequestBody.create(mediaType, "{\"color_g\":\"" + colorG.getText() + "\", \"color_r\":\"" + colorR.getText() + "\", \"color_b\":\"" + colorB.getText() + "\"}");
-        Request request = new Request.Builder()
-                .url("http://thingsboard.cloud/api/v1/YOUR_API_KEY/telemetry")
-                .post(body)
-                .build();
-
-        client.newCall(request).enqueue(new okhttp3.Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                // Handle the error
-                Log.e(TAG, "Error sending POST request", e); responseTextView.post(new Runnable() { @Override public void run() { responseTextView.setText("Error sending POST request"); } }); }
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                if (response.isSuccessful()) {
-                    // Handle the response
-                    Log.d(TAG, "POST request successful: " + response.body().string());
-                    responseTextView.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            responseTextView.setText("POST request successful");
-                        }
-                    });
-                } else {
-                    // Handle the error
-                    Log.e(TAG, "POST request not successful: " + response.code());
-                    responseTextView.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            responseTextView.setText("POST request not successful");
-                        }
-                    });
-                }
+            public void onClick(View v) {
+                System.out.println("btnManual Pressedx1");
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentTransaction.add(R.id.constraintMain, new ManuallyFragment());
+                fragmentTransaction.commit();
+                btnHide();
+                System.out.println("btnManual Pressed");
             }
         });
+
+    }
+
+    public void btnHide() {
+        btnRandom.setEnabled(false);
+        btnManual.setEnabled(false);
+        btnRandom.setVisibility(View.GONE);
+        btnManual.setVisibility(View.GONE);
     }
 }
